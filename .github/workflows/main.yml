@@ -1,0 +1,39 @@
+name: Scrape Raw GitHub URLs
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape-and-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SCRAPE_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Run Scraper
+        env:
+          SCRAPE_PAT: ${{ secrets.SCRAPE_PAT }}
+          TARGET_TOPIC: "mond-package"
+        run: python scrape.py
+
+      - name: Commit and Push packages.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "auto: update packages.json [skip ci]"
+          file_pattern: "packages.json"
+          
